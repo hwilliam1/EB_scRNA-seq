@@ -1,0 +1,76 @@
+---
+title: "Clustering"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r include = FALSE, message = FALSE, error=FALSE}
+#load in packages
+library(Seurat)
+library(tidyverse)
+library(patchwork)
+
+setwd('~/EB-scRNAseq')
+eb<-readRDS("eb01.rds")
+```
+The codes below will detail the gene clustering process
+
+## Find differentially expressed genes
+Identifies the positive and negative markers of a single cluster. 
+min.pct requires a feature to be detected at a minimum percentage in either of the two groups.
+thresh.test requires a feature to be differentially expressed by some amount between the two groups.
+```{r message=FALSE}
+cluster2.markers <-FindMarkers(eb, ident.1 = 2, min.pct = 0.25)
+head(cluster2.markers, n = 5)
+```
+Find all markers differently expressed in cluster 5 from clusters 0 and 3
+```{r message = FALSE}
+cluster5.markers <- FindMarkers(eb, ident.1 = 5, ident.2 = c(0,3),min.pct = 0.25)
+head(cluster5.markers, n=5)
+
+```
+Find markers for every cluster compared to all the other cells, return only the positive ones (estimate 80 seconds)
+```{r message = FALSE, error = FALSE}
+eb.markers <- FindAllMarkers(eb, only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
+eb.markers %>%
+  group_by(cluster) %>%
+  top_n(n=2, wt= avg_log2FC)
+```
+```{r}
+head(eb.markers, n = 6)
+```
+
+##Visualize marker expression
+Violin plots
+```{r message=FALSE}
+VlnPlot(eb, features = c("GAL","FOXD3-AS1"))
+#plot raw counts
+VlnPlot(eb, features = c("GAL","FOXD3-AS1"), slot = "counts", log = TRUE)
+```
+Feature plots
+```{r message = FALSE}
+FeaturePlot(eb, features = c("GAL","FOXD3-AS1","D21S2088E","THY1","RPS26","RP11-132A1.3"), ncol = 3)
+```
+Plot top 20 markers on Heatmaps
+```{r fig.height=10, message=FALSE}
+eb.markers %>%
+  group_by(cluster) %>%
+  top_n(n = 10, wt = avg_log2FC) -> top10
+DoHeatmap(eb, features = top10$gene) + NoLegend()
+```
+
+## Assign embryoid body types (currently under investigation)
+```{r message = FALSE}
+# new.cluster.ids <- c("hemangioblast","cardiac","epicardial precursors","smooth muscle precursors","cardiac precursors","neuronal subtypes")
+# names(new.cluster.ids) <- levels(eb)
+# eb <- RenameIdents(eb, new.cluster.ids)
+# DimPlot(eb, reduction = "umap", label = TRUE, pt.size = 0.5) + NoLegend()
+```
+Save the rds file
+```{r include = FALSE}
+saveRDS(eb, file = 'eb01.rds')
+```
+

@@ -1,4 +1,3 @@
-#Reference: https://satijalab.org/seurat/articles/pbmc3k_tutorial.html
 library(Seurat)
 library(tidyverse)
 library(patchwork)
@@ -82,13 +81,15 @@ eb %>% Idents(.) %>% head(.,5) #show first 5 cell IDs
 # eb_umap<-eb
 eb_umap <- RunUMAP(eb, dims = 1:20)
 DimPlot(eb_umap, reduction = 'umap', label = TRUE)
+eb <- eb_umap #save umap result to eb object
 #T-SNE
 # eb_tsne <-eb
 eb_tsne <- RunTSNE(eb, dims = 1:20)
 DimPlot(eb_tsne, reduction = 'tsne', label = TRUE)
 
+eb<-eb_tsne #save tsne result while preserving umap result
 
 
 #Save processed file
-# saveRDS(eb, file = 'eb23.rds')
+# saveRDS(eb, file = 'eb01.rds')
 
